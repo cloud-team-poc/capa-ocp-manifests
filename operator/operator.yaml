@@ -5,67 +5,6 @@ metadata:
     cluster.x-k8s.io/provider: cluster-api
     control-plane: controller-manager
   name: ocp-cluster-api
-
----
-apiVersion: cloudcredential.openshift.io/v1
-kind: CredentialsRequest
-metadata:
-  annotations:
-    exclude.release.openshift.io/internal-openshift-hosted: "true"
-    include.release.openshift.io/self-managed-high-availability: "true"
-    manager: cloud-credential-operator
-  name: openshift-machine-api-capi
-  namespace: openshift-cloud-credential-operator
-spec:
-  providerSpec:
-    apiVersion: cloudcredential.openshift.io/v1
-    kind: AWSProviderSpec
-    statementEntries:
-    - action:
-      - ec2:CreateTags
-      - ec2:DescribeAvailabilityZones
-      - ec2:DescribeDhcpOptions
-      - ec2:DescribeImages
-      - ec2:DescribeInstances
-      - ec2:DescribeSecurityGroups
-      - ec2:DescribeSubnets
-      - ec2:DescribeVpcs
-      - ec2:DescribeNetworkInterfaces
-      - ec2:DescribeNetworkInterfaceAttribute
-      - ec2:RunInstances
-      - ec2:TerminateInstances
-      - elasticloadbalancing:DescribeLoadBalancers
-      - elasticloadbalancing:DescribeTargetGroups
-      - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-      - elasticloadbalancing:RegisterTargets
-      - elasticloadbalancing:DeregisterTargets
-      - iam:PassRole
-      - iam:CreateServiceLinkedRole
-      effect: Allow
-      resource: '*'
-    - action:
-      - kms:Decrypt
-      - kms:Encrypt
-      - kms:GenerateDataKey
-      - kms:GenerateDataKeyWithoutPlainText
-      - kms:DescribeKey
-      effect: Allow
-      resource: '*'
-    - action:
-      - kms:RevokeGrant
-      - kms:CreateGrant
-      - kms:ListGrants
-      effect: Allow
-      policyCondition:
-        Bool:
-          kms:GrantIsForAWSResource: true
-      resource: '*'
-  secretRef:
-    name: capa-manager-bootstrap-credentials
-    namespace: ocp-cluster-api
-  serviceAccountNames:
-  - default
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -79,14 +18,14 @@ spec:
       cluster.x-k8s.io/provider: operator
   template:
     metadata:
-      labels:  
+      labels:
         cluster.x-k8s.io/provider: operator
     spec:
       serviceAccountName: default
       containers:
-        - image: quay.io/ademicev/capi-operator:latest
-          imagePullPolicy: Always
-          name: manager
+      - image: quay.io/asalkeld/openshift-cluster-api-operator:latest
+        imagePullPolicy: Always
+        name: manager
       terminationGracePeriodSeconds: 10
       tolerations:
       - effect: NoSchedule
@@ -101,6 +40,6 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
-  - kind: ServiceAccount
-    name: default
-    namespace: ocp-cluster-api
+- kind: ServiceAccount
+  name: default
+  namespace: ocp-cluster-api
